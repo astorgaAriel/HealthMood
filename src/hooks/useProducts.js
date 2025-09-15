@@ -39,14 +39,9 @@ export const useProducts = () => {
         // Crear nuevo AbortController
         abortControllerRef.current = new AbortController();
         
-        // Timeout más agresivo para mejor UX
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('API_TIMEOUT')), 4000)
-        );
-        
-        const apiPromise = apiService.getProducts();
-        
-        const response = await Promise.race([apiPromise, timeoutPromise]);
+        // Esperar siempre a la respuesta del servidor sin timeout
+        console.log('Obteniendo productos del servidor...');
+        const response = await apiService.getProducts();
         
         // El backend puede devolver los datos directamente o en response.data
         const rawProducts = response.data || response;
@@ -86,11 +81,12 @@ export const useProducts = () => {
           // Guardar en cache
           productCache = transformedProducts;
           cacheTimestamp = Date.now();
-          console.log('Productos guardados en cache');
+          console.log('Productos de la base de datos cargados exitosamente');
         } else {
-          console.warn('API response not valid, using fallback data');
-          setProducts(MOCK);
-          setIsUsingFallback(true);
+          console.error('Respuesta de la API no válida o vacía');
+          setError('La respuesta del servidor no es válida. Por favor, contacta al administrador.');
+          setProducts([]);
+          setIsUsingFallback(false);
         }
         
       } catch (err) {
@@ -99,14 +95,10 @@ export const useProducts = () => {
           return;
         }
         
-        console.warn('API error, using fallback data:', err.message);
-        if (err.message === 'API_TIMEOUT') {
-          setError('El servidor está tardando en responder. Mostrando productos de ejemplo.');
-        } else {
-          setError(err.message);
-        }
-        setProducts(MOCK);
-        setIsUsingFallback(true);
+        console.error('Error al obtener productos de la base de datos:', err.message);
+        setError(`Error de conexión: ${err.message}. Por favor, verifica que el servidor esté funcionando.`);
+        setProducts([]);
+        setIsUsingFallback(false);
       } finally {
         setLoading(false);
       }
@@ -127,34 +119,53 @@ export const useProducts = () => {
       setLoading(true);
       setError(null);
       
+      console.log('Reintentando obtener productos del servidor...');
       const response = await apiService.getProducts();
       const rawProducts = response.data || response;
       
       if (rawProducts && Array.isArray(rawProducts)) {
-        const transformedProducts = rawProducts.map(product => ({
-          id: product.productId || product.id,
-          name: product.name || 'Producto sin nombre',
-          description: product.description || 'Sin descripción',
-          price: product.price || 0,
-          category: product.category || 'Sin categoría',
-          image: product.images || product.imageUrl || product.image || DEFAULT_PRODUCT_IMAGE,
-          rating: product.rating || 4.5,
-          stock: product.stock !== undefined ? product.stock : 10,
-          active: product.active !== undefined ? product.active : true
-        }));
+        // Usar la misma transformación que en el useEffect principal
+        const transformedProducts = rawProducts.map(product => {
+          // Extraer la primera imagen del array de imágenes
+          let imageUrl = null;
+          if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+            imageUrl = product.images[0].imageUrl || product.images[0].url || product.images[0].src;
+          }
+
+          return {
+            id: product.productId || product.id,
+            name: product.name || 'Producto sin nombre',
+            description: product.description || 'Sin descripción',
+            price: product.price || 0,
+            category: product.category?.name || String(product.category || 'Sin categoría'),
+            image: imageUrl,
+            rating: product.rating || 4.5,
+            stock: product.stock !== undefined ? product.stock : 10,
+            active: product.active !== undefined ? product.active : true
+          };
+        });
         
         setProducts(transformedProducts);
         setIsUsingFallback(false);
+        
+        // Actualizar cache
+        productCache = transformedProducts;
+        cacheTimestamp = Date.now();
+        console.log('Productos actualizados desde la base de datos');
+        
         return transformedProducts;
       } else {
-        setProducts(MOCK);
-        setIsUsingFallback(true);
-        return MOCK;
+        console.error('Respuesta de la API no válida al reintentar');
+        setError('La respuesta del servidor no es válida. Por favor, contacta al administrador.');
+        setProducts([]);
+        setIsUsingFallback(false);
+        return [];
       }
     } catch (err) {
-      setError(err.message);
-      setProducts(MOCK);
-      setIsUsingFallback(true);
+      console.error('Error al reintentar obtener productos:', err.message);
+      setError(`Error de conexión: ${err.message}. Por favor, verifica que el servidor esté funcionando.`);
+      setProducts([]);
+      setIsUsingFallback(false);
       throw err;
     } finally {
       setLoading(false);

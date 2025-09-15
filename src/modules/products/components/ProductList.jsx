@@ -125,12 +125,12 @@ export default function ProductList({ categoriaInicial }) {
             </div>
             <div className="text-start">
               <h5 className="mb-1 text-success">
-                <i className="fas fa-leaf me-2"></i>
-                Cargando productos naturales...
+                <i className="fas fa-database me-2"></i>
+                Cargando productos desde la base de datos...
               </h5>
               <small className="text-muted">
-                <i className="fas fa-wifi me-1"></i>
-                Conectando con nuestro catálogo
+                <i className="fas fa-server me-1"></i>
+                Obteniendo datos actualizados del servidor
               </small>
             </div>
           </div>
@@ -142,7 +142,7 @@ export default function ProductList({ categoriaInicial }) {
           
           <p className="mt-2 text-muted small mb-0">
             <i className="fas fa-clock me-1"></i>
-            Esto puede tomar unos momentos...
+            Esperando respuesta del servidor... Por favor, ten paciencia.
           </p>
         </div>
 
@@ -231,18 +231,40 @@ export default function ProductList({ categoriaInicial }) {
     );
   }
 
-  return (
-    <div className="container-fluid px-4 py-4">
-      {/* Mostrar aviso si está usando datos de fallback */}
-      {isUsingFallback && (
-        <div className="alert alert-info d-flex align-items-center">
-          <i className="fas fa-info-circle me-2"></i>
-          <div>
-            <strong>Modo Demo:</strong> Mostrando productos de ejemplo. 
-            {error && <small className="d-block text-muted">{error}</small>}
+  // Mostrar mensaje si no hay productos
+  if (!loading && !error && products.length === 0) {
+    return (
+      <div className="container-fluid px-4 py-4">
+        <div className="row justify-content-center">
+          <div className="col-md-8 col-lg-6">
+            <div className="card border-info">
+              <div className="card-body text-center p-5">
+                <div className="mb-4">
+                  <i className="fas fa-leaf text-success" style={{fontSize: '3rem'}}></i>
+                </div>
+                <h4 className="card-title text-success mb-3">
+                  No hay productos disponibles
+                </h4>
+                <p className="card-text text-muted mb-4">
+                  La base de datos no contiene productos en este momento.
+                </p>
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => window.location.reload()}
+                >
+                  <i className="fas fa-refresh me-2"></i>
+                  Actualizar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="container-fluid px-4 py-4">
       {/* Barra de búsqueda */}
       <div className="row mb-4">
         <div className="col-12">

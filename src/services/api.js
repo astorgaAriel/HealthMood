@@ -4,7 +4,7 @@ import axios from 'axios';
 // Configurar la instancia de Axios
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  timeout: 10000, // 10 segundos
+  timeout: 30000, // 30 segundos - Tiempo suficiente para respuesta del servidor
   headers: {
     'Content-Type': 'application/json',
   },
