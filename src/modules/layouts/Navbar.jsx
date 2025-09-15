@@ -42,14 +42,48 @@ export default function Navbar() {
     };
   }, []);
 
-  const handleMobileNavClick = () => {
-    const offcanvasElement = document.getElementById('offcanvasNav');
-    if (offcanvasElement) {
-      const offcanvas = window.bootstrap?.Offcanvas?.getInstance(offcanvasElement);
-      if (offcanvas) {
-        offcanvas.hide();
+  const handleMobileNavClick = (path) => {
+    return (e) => {
+      e.preventDefault();
+      console.log('Mobile nav clicked:', path);
+      
+      // Cerrar el offcanvas con múltiples métodos para garantizar que se cierre
+      const offcanvasElement = document.getElementById('offcanvasNav');
+      if (offcanvasElement) {
+        try {
+          // Método 1: Usar Bootstrap API
+          const offcanvas = window.bootstrap?.Offcanvas?.getInstance(offcanvasElement);
+          if (offcanvas) {
+            offcanvas.hide();
+          } else if (window.bootstrap?.Offcanvas) {
+            // Crear nueva instancia si no existe
+            const newOffcanvas = new window.bootstrap.Offcanvas(offcanvasElement);
+            newOffcanvas.hide();
+          }
+        } catch (error) {
+          console.log('Bootstrap method failed, using manual close:', error);
+        }
+        
+        // Método 2: Cierre manual como backup
+        setTimeout(() => {
+          offcanvasElement.classList.remove('show');
+          document.body.classList.remove('modal-open', 'offcanvas-open');
+          document.body.style.removeProperty('overflow');
+          document.body.style.removeProperty('padding-right');
+          
+          // Remover backdrop
+          const backdrop = document.querySelector('.offcanvas-backdrop');
+          if (backdrop) {
+            backdrop.remove();
+          }
+        }, 50);
       }
-    }
+      
+      // Navegar después de un pequeño delay para permitir que el menú se cierre
+      setTimeout(() => {
+        navigate(path);
+      }, 200);
+    };
   };
 
   const handleLogout = (e) => {
@@ -348,70 +382,49 @@ export default function Navbar() {
               {/* Navigation links */}
               <ul className="navbar-nav p-3">
                 <li className="nav-item mb-2">
-                  <NavLink
-                    end
-                    to="/"
-                    onClick={handleMobileNavClick}
-                    className={({ isActive }) =>
-                      `nav-link text-white p-3 rounded-3 mobile-nav-link ${
-                        isActive ? 'active bg-white bg-opacity-25' : ''
-                      }`
-                    }
+                  <button
+                    onClick={handleMobileNavClick('/')}
+                    className="nav-link text-white p-3 rounded-3 mobile-nav-link w-100 border-0"
+                    style={{ background: 'transparent' }}
                   >
                     INICIO
-                  </NavLink>
+                  </button>
                 </li>
                 <li className="nav-item mb-2">
-                  <NavLink
-                    to="/about"
-                    onClick={handleMobileNavClick}
-                    className={({ isActive }) =>
-                      `nav-link text-white p-3 rounded-3 mobile-nav-link ${
-                        isActive ? 'active bg-white bg-opacity-25' : ''
-                      }`
-                    }
+                  <button
+                    onClick={handleMobileNavClick('/about')}
+                    className="nav-link text-white p-3 rounded-3 mobile-nav-link w-100 border-0"
+                    style={{ background: 'transparent' }}
                   >
                     QUIENES SOMOS
-                  </NavLink>
+                  </button>
                 </li>
                 <li className="nav-item mb-2">
-                  <NavLink
-                    to="/products"
-                    onClick={handleMobileNavClick}
-                    className={({ isActive }) =>
-                      `nav-link text-white p-3 rounded-3 mobile-nav-link ${
-                        isActive ? 'active bg-white bg-opacity-25' : ''
-                      }`
-                    }
+                  <button
+                    onClick={handleMobileNavClick('/products')}
+                    className="nav-link text-white p-3 rounded-3 mobile-nav-link w-100 border-0"
+                    style={{ background: 'transparent' }}
                   >
                     CATÁLOGO
-                  </NavLink>
+                  </button>
                 </li>
                 <li className="nav-item mb-2">
-                  <NavLink
-                    to="/blog"
-                    onClick={handleMobileNavClick}
-                    className={({ isActive }) =>
-                      `nav-link text-white p-3 rounded-3 mobile-nav-link ${
-                        isActive ? 'active bg-white bg-opacity-25' : ''
-                      }`
-                    }
+                  <button
+                    onClick={handleMobileNavClick('/blog')}
+                    className="nav-link text-white p-3 rounded-3 mobile-nav-link w-100 border-0"
+                    style={{ background: 'transparent' }}
                   >
                     BLOG
-                  </NavLink>
+                  </button>
                 </li>
                 <li className="nav-item mb-2">
-                  <NavLink
-                    to="/contact"
-                    onClick={handleMobileNavClick}
-                    className={({ isActive }) =>
-                      `nav-link text-white p-3 rounded-3 mobile-nav-link ${
-                        isActive ? 'active bg-white bg-opacity-25' : ''
-                      }`
-                    }
+                  <button
+                    onClick={handleMobileNavClick('/contact')}
+                    className="nav-link text-white p-3 rounded-3 mobile-nav-link w-100 border-0"
+                    style={{ background: 'transparent' }}
                   >
                     CONTACTO
-                  </NavLink>
+                  </button>
                 </li>
                 {/* Search icon in mobile */}
                 <li className="nav-item mb-2">
@@ -438,9 +451,8 @@ export default function Navbar() {
 
               {/* Cart in mobile */}
               <div className="p-3">
-                <NavLink
-                  to="/cart"
-                  onClick={handleMobileNavClick}
+                <button
+                  onClick={handleMobileNavClick('/cart')}
                   className="btn btn-outline-light rounded-pill w-100 py-3 d-flex align-items-center justify-content-center"
                 >
                   <FaShoppingCart className="me-2" />
@@ -450,50 +462,60 @@ export default function Navbar() {
                       {cartCount}
                     </span>
                   )}
-                </NavLink>
+                </button>
               </div>
 
               {/* Authentication actions */}
               <div className="p-3 mt-auto">
                 {!isAuthenticated ? (
                   <div className="d-grid gap-2">
-                    <NavLink
-                      to="/login"
-                      onClick={handleMobileNavClick}
+                    <button
+                      onClick={handleMobileNavClick('/login')}
                       className="btn btn-light rounded-pill py-3"
                     >
                       <FaSignInAlt className="me-2" />
                       Iniciar Sesión
-                    </NavLink>
-                    <NavLink
-                      to="/register"
-                      onClick={handleMobileNavClick}
+                    </button>
+                    <button
+                      onClick={handleMobileNavClick('/register')}
                       className="btn btn-warning rounded-pill py-3"
                     >
                       Crear Cuenta
-                    </NavLink>
+                    </button>
                   </div>
                 ) : (
                   <div className="d-grid gap-2">
-                    <Link
-                      to="/profile"
-                      onClick={handleMobileNavClick}
+                    <button
+                      onClick={handleMobileNavClick('/profile')}
                       className="btn btn-light rounded-pill py-3"
                     >
                       Mi Perfil
-                    </Link>
-                    <Link
-                      to="/orders"
-                      onClick={handleMobileNavClick}
+                    </button>
+                    <button
+                      onClick={handleMobileNavClick('/orders')}
                       className="btn btn-outline-light rounded-pill py-3"
                     >
                       Mis Pedidos
-                    </Link>
+                    </button>
                     <button
                       className="btn btn-outline-light rounded-pill py-3 text-start"
                       onClick={(e) => {
-                        handleLogout(e);
-                        handleMobileNavClick();
+                        // Cerrar el menú primero
+                        const offcanvasElement = document.getElementById('offcanvasNav');
+                        if (offcanvasElement) {
+                          try {
+                            const offcanvas = window.bootstrap?.Offcanvas?.getInstance(offcanvasElement);
+                            if (offcanvas) {
+                              offcanvas.hide();
+                            }
+                          } catch (error) {
+                            console.log('Error closing offcanvas:', error);
+                          }
+                        }
+                        // Luego hacer logout
+                        setTimeout(() => {
+                          handleLogout(e);
+                        }, 150);
                       }}
                     >
                       <FaSignOutAlt className="me-2" />

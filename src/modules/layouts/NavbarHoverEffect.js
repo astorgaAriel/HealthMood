@@ -1,7 +1,11 @@
 export function initializeNavHoverEffect() {
-  const navLinks = document.querySelectorAll('.nav-link-custom');
+  // Solo aplicar el efecto a enlaces de escritorio, no a los móviles
+  const navLinks = document.querySelectorAll('.nav-link-custom:not(.mobile-nav-link)');
 
   navLinks.forEach(link => {
+    // Verificar que no sea un enlace móvil
+    if (link.closest('.offcanvas')) return;
+    
     let lastMouseX = 0;
     
     link.addEventListener('mouseenter', (e) => {

@@ -210,6 +210,53 @@ a.auth-button:active {
   .mobile-nav-link {
     pointer-events: auto !important;
     cursor: pointer !important;
+    position: relative;
+    z-index: 1060;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    /* Debug styles */
+    border: 2px solid transparent !important;
+  }
+
+  .mobile-nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+  }
+
+  .mobile-nav-link:active {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    border-color: white !important;
+  }
+
+  /* Estilos específicos para botones de navegación móvil */
+  button.mobile-nav-link {
+    background: transparent !important;
+    border: none !important;
+    text-decoration: none !important;
+    outline: none !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.5px !important;
+  }
+
+  button.mobile-nav-link:focus {
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  /* Espaciado uniforme para todos los botones móviles */
+  .offcanvas-body .nav-item {
+    margin-bottom: 0.75rem;
+  }
+
+  .offcanvas-body .btn {
+    font-family: 'Lato', sans-serif;
+    text-align: center;
+    font-weight: 500;
   }
 }
 
