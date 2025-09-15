@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../cart/hooks/useCart';
 import { useProducts } from '../../../hooks/useProducts';
@@ -113,27 +113,119 @@ export default function ProductList({ categoriaInicial }) {
     setPage(1);
   }, [search, category, limit]);
 
-  // Mostrar loading
+  // Mostrar loading con skeleton mejorado
   if (loading) {
     return (
       <div className="container-fluid px-4 py-4">
-        <div className="text-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Cargando productos...</span>
+        {/* Header de carga mejorado */}
+        <div className="text-center mb-5">
+          <div className="d-inline-flex align-items-center gap-3 p-4 rounded-3 bg-light border">
+            <div className="spinner-border text-success" role="status" style={{ width: '2.5rem', height: '2.5rem' }}>
+              <span className="visually-hidden">Cargando...</span>
+            </div>
+            <div className="text-start">
+              <h5 className="mb-1 text-success">
+                <i className="fas fa-leaf me-2"></i>
+                Cargando productos naturales...
+              </h5>
+              <small className="text-muted">
+                <i className="fas fa-wifi me-1"></i>
+                Conectando con nuestro catálogo
+              </small>
+            </div>
           </div>
-          <p className="mt-3">Cargando productos...</p>
+          
+          <div className="progress mt-3 mx-auto" style={{ height: '6px', maxWidth: '250px' }}>
+            <div className="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                 style={{ width: '85%' }}></div>
+          </div>
+          
+          <p className="mt-2 text-muted small mb-0">
+            <i className="fas fa-clock me-1"></i>
+            Esto puede tomar unos momentos...
+          </p>
+        </div>
+
+        {/* Skeleton loading para mejor UX */}
+        <div className="row">
+          {[...Array(6)].map((_, index) => (
+            <div key={index} className="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-4">
+              <div className="card h-100 border-0 shadow-sm" style={{opacity: 0.7}}>
+                <div className="placeholder-glow">
+                  {/* Imagen skeleton */}
+                  <div 
+                    className="placeholder bg-light rounded-top" 
+                    style={{height: '200px', width: '100%'}}
+                  ></div>
+                </div>
+                <div className="card-body placeholder-glow">
+                  {/* Título skeleton */}
+                  <h6 className="card-title">
+                    <span className="placeholder col-8 rounded"></span>
+                  </h6>
+                  {/* Descripción skeleton */}
+                  <p className="card-text">
+                    <span className="placeholder col-12 rounded mb-1"></span>
+                    <span className="placeholder col-9 rounded"></span>
+                  </p>
+                  {/* Precio skeleton */}
+                  <div className="d-flex justify-content-between align-items-center">
+                    <span className="placeholder col-4 rounded bg-success" style={{height: '1.5rem'}}></span>
+                    <span className="placeholder col-3 rounded bg-primary" style={{height: '2rem'}}></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
-  // Mostrar error (si no hay fallback)
+  // Mostrar error mejorado (si no hay fallback)
   if (error && !isUsingFallback) {
     return (
       <div className="container-fluid px-4 py-4">
-        <div className="alert alert-danger text-center">
-          <h4>Error al cargar productos</h4>
-          <p>{error}</p>
+        <div className="row justify-content-center">
+          <div className="col-md-8 col-lg-6">
+            <div className="card border-danger">
+              <div className="card-body text-center p-5">
+                <div className="mb-4">
+                  <i className="fas fa-exclamation-triangle text-danger" style={{fontSize: '3rem'}}></i>
+                </div>
+                <h4 className="card-title text-danger mb-3">
+                  No se pudieron cargar los productos
+                </h4>
+                <p className="card-text text-muted mb-4">
+                  Parece que hay un problema de conexión con nuestro servidor.
+                </p>
+                <details className="mb-4">
+                  <summary className="btn btn-outline-secondary btn-sm">
+                    Ver detalles técnicos
+                  </summary>
+                  <div className="mt-3 p-3 bg-light rounded">
+                    <small className="text-muted font-monospace">{error}</small>
+                  </div>
+                </details>
+                <div className="d-flex flex-column flex-sm-row gap-2 justify-content-center">
+                  <button 
+                    className="btn btn-danger"
+                    onClick={() => window.location.reload()}
+                  >
+                    <i className="fas fa-redo me-2"></i>
+                    Reintentar
+                  </button>
+                  <button 
+                    className="btn btn-outline-primary"
+                    onClick={() => window.history.back()}
+                  >
+                    <i className="fas fa-arrow-left me-2"></i>
+                    Volver
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -143,9 +235,12 @@ export default function ProductList({ categoriaInicial }) {
     <div className="container-fluid px-4 py-4">
       {/* Mostrar aviso si está usando datos de fallback */}
       {isUsingFallback && (
-        <div className="alert alert-warning">
-          <i className="fas fa-exclamation-triangle me-2"></i>
-          Mostrando datos de ejemplo. No se pudo conectar con el servidor.
+        <div className="alert alert-info d-flex align-items-center">
+          <i className="fas fa-info-circle me-2"></i>
+          <div>
+            <strong>Modo Demo:</strong> Mostrando productos de ejemplo. 
+            {error && <small className="d-block text-muted">{error}</small>}
+          </div>
         </div>
       )}
       {/* Barra de búsqueda */}

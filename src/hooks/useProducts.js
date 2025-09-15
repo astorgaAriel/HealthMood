@@ -1,22 +1,52 @@
 // src/hooks/useProducts.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import apiService from '../services/api';
 import { MOCK } from '../modules/home/utils/dummyData';
+
+// Cache temporal (5 minutos)
+let productCache = null;
+let cacheTimestamp = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
 export const useProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isUsingFallback, setIsUsingFallback] = useState(false);
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
-    
     const fetchProducts = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const response = await apiService.getProducts();
+        // Verificar cache temporal
+        const now = Date.now();
+        if (productCache && cacheTimestamp && (now - cacheTimestamp) < CACHE_DURATION) {
+          console.log('Usando productos en cache');
+          setProducts(productCache);
+          setIsUsingFallback(false);
+          setLoading(false);
+          return;
+        }
+
+        // Cancelar request anterior si existe
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+        
+        // Crear nuevo AbortController
+        abortControllerRef.current = new AbortController();
+        
+        // Timeout más agresivo para mejor UX
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('API_TIMEOUT')), 4000)
+        );
+        
+        const apiPromise = apiService.getProducts();
+        
+        const response = await Promise.race([apiPromise, timeoutPromise]);
         
         // El backend puede devolver los datos directamente o en response.data
         const rawProducts = response.data || response;
@@ -52,13 +82,29 @@ export const useProducts = () => {
           
           setProducts(transformedProducts);
           setIsUsingFallback(false);
+          
+          // Guardar en cache
+          productCache = transformedProducts;
+          cacheTimestamp = Date.now();
+          console.log('Productos guardados en cache');
         } else {
+          console.warn('API response not valid, using fallback data');
           setProducts(MOCK);
           setIsUsingFallback(true);
         }
         
       } catch (err) {
-        setError(err.message);
+        // Si es cancelación, no hacer nada
+        if (err.name === 'AbortError') {
+          return;
+        }
+        
+        console.warn('API error, using fallback data:', err.message);
+        if (err.message === 'API_TIMEOUT') {
+          setError('El servidor está tardando en responder. Mostrando productos de ejemplo.');
+        } else {
+          setError(err.message);
+        }
         setProducts(MOCK);
         setIsUsingFallback(true);
       } finally {
@@ -67,6 +113,13 @@ export const useProducts = () => {
     };
 
     fetchProducts();
+    
+    // Cleanup: cancelar request al desmontar
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []); // Sin dependencias - se ejecuta solo una vez
 
   const refetch = async () => {
@@ -108,11 +161,22 @@ export const useProducts = () => {
     }
   };
 
+  // Función para limpiar cache
+  const clearCache = () => {
+    productCache = null;
+    cacheTimestamp = null;
+    console.log('Cache de productos limpiado');
+  };
+
+  // Memorizar los productos para evitar re-renders innecesarios
+  const memoizedProducts = useMemo(() => products, [products]);
+
   return { 
-    products, 
+    products: memoizedProducts, 
     loading, 
     error, 
     refetch, 
-    isUsingFallback
+    isUsingFallback,
+    clearCache
   };
 };
