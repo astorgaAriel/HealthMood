@@ -43,7 +43,7 @@ export const BackendDebugger = () => {
         const token = localStorage.getItem('authToken');
         localStorage.removeItem('authToken');
         try {
-          const result = await fetch('http://localhost:8080/api/health');
+          const result = await fetch(`${import.meta.env.VITE_API_URL}/health`);
           const text = await result.text();
           return { status: result.status, body: text };
         } finally {
@@ -56,7 +56,7 @@ export const BackendDebugger = () => {
       label: '🔍 Raw Products (con token manual)',
       test: async () => {
         const token = localStorage.getItem('authToken');
-        const result = await fetch('http://localhost:8080/api/products', {
+        const result = await fetch('${import.meta.env.VITE_API_URL}/products', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
